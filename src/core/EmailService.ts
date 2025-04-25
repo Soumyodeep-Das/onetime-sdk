@@ -1,19 +1,22 @@
 // src/core/EmailService.ts
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
-import crypto from 'crypto';
+import { logger } from '../utils/logger';
+import { EmailDeliveryError } from '../utils/errors';
+import { generateSecureOTP } from '../utils/helper';
+
 dotenv.config();
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail', // You can change this based on your setup
+  service: 'gmail',
   auth: {
     user: process.env.ONETIME_EMAIL_SENDER,
-    pass: process.env.ONETIME_EMAIL_PASSWORD, // must be set in .env
+    pass: process.env.ONETIME_EMAIL_PASSWORD,
   },
 });
 
 export async function sendOTPViaEmail(to: string): Promise<{ success: boolean; message: string }> {
-  const otp = generateOTP();
+  const otp = generateSecureOTP();
   const mailOptions = {
     from: process.env.ONETIME_EMAIL_SENDER,
     to,
@@ -23,14 +26,10 @@ export async function sendOTPViaEmail(to: string): Promise<{ success: boolean; m
 
   try {
     await transporter.sendMail(mailOptions);
+    logger.info(`OTP sent to ${to} via email`);
     return { success: true, message: 'OTP sent via email successfully' };
   } catch (error: any) {
-    return { success: false, message: `Failed to send OTP: ${error.message}` };
+    logger.error(`Failed to send OTP to ${to} via email: ${error.message}`);
+    throw new EmailDeliveryError(`Failed to send OTP: ${error.message}`);
   }
-}
-
-function generateOTP(): string {
-  const buffer = crypto.randomBytes(3); // 3 bytes = 24 bits = up to 16777215
-  const otp = buffer.readUIntBE(0, 3) % 1000000;
-  return otp.toString().padStart(6, '0');
 }

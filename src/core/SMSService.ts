@@ -1,32 +1,32 @@
 // src/core/SMSService.ts
-import dotenv from 'dotenv';
 import twilio from 'twilio';
-import crypto from 'crypto';
+import dotenv from 'dotenv';
+import { logger } from '../utils/logger';
+import { SMSDeliveryError } from '../utils/errors';
+import { generateSecureOTP } from '../utils/helper';
+
 dotenv.config();
 
-const accountSid = process.env.TWILIO_ACCOUNT_SID || '';
-const authToken = process.env.TWILIO_AUTH_TOKEN || '';
-const fromNumber = process.env.TWILIO_PHONE_NUMBER || '';
-
-const client = twilio(accountSid, authToken);
+const client = twilio(
+  process.env.ONETIME_TWILIO_ACCOUNT_SID!,
+  process.env.ONETIME_TWILIO_AUTH_TOKEN!
+);
 
 export async function sendOTPViaSMS(to: string): Promise<{ success: boolean; message: string }> {
-  const otp = generateOTP();
+  const otp = generateSecureOTP();
+  const messageBody = `Your OTP code is ${otp}. It is valid for 2 minutes.`;
 
   try {
     await client.messages.create({
-      body: `Your OneTime OTP code is ${otp}. It is valid for 2 minutes.`,
-      from: fromNumber,
+      body: messageBody,
+      from: process.env.ONETIME_TWILIO_PHONE_NUMBER!,
       to,
     });
+
+    logger.info(`OTP sent to ${to} via SMS`);
     return { success: true, message: 'OTP sent via SMS successfully' };
   } catch (error: any) {
-    return { success: false, message: `Failed to send OTP: ${error.message}` };
+    logger.error(`Failed to send OTP to ${to} via SMS: ${error.message}`);
+    throw new SMSDeliveryError(`Failed to send OTP: ${error.message}`);
   }
-}
-
-function generateOTP(): string {
-  const buffer = crypto.randomBytes(3); // 3 bytes = 24 bits = up to 16777215
-  const otp = buffer.readUIntBE(0, 3) % 1000000;
-  return otp.toString().padStart(6, '0');
 }

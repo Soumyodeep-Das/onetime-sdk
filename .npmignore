@@ -1,0 +1,12 @@
+.env
+.env.local
+.env.*.local
+src/
+tests/
+*.log
+node_modules/
+tsconfig.json
+tslint.json
+.nyc_output/
+coverage/
+dist/*.map
