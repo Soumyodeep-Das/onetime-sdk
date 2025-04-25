@@ -1,36 +1,39 @@
 {
   "name": "onetime-sdk",
   "version": "1.0.0",
-  "main": "dist/index.cjs",
-  "module": "dist/index.mjs",
+  "description": "A secure SDK for sending and verifying OTPs via email and SMS.",
+  "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "files": [
-    "dist",
-    "README.md"
-  ],
   "scripts": {
-    "build": "tsup",
-    "test": "jest"
+    "build": "tsc",
+    "dev": "ts-node src/index.ts",
+    "prepare": "npm run build"
   },
   "keywords": [
     "otp",
-    "2fa",
     "sdk",
-    "onetime",
+    "email-otp",
+    "sms-otp",
+    "2fa",
+    "authentication",
     "twilio",
-    "email",
-    "sms"
+    "nodemailer"
   ],
-  "author": "OneTime Team",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Soumyodeep-Das/onetime-sdk"
+  },
+  "author": "Your Name",
   "license": "MIT",
   "dependencies": {
-    "axios": "^1.9.0"
+    "axios": "^1.6.0",
+    "dotenv": "^16.5.0",
+    "nodemailer": "^6.10.1",
+    "twilio": "^4.20.0"
   },
   "devDependencies": {
-    "@types/jest": "^29.5.14",
-    "@types/node": "^22.15.2",
-    "jest": "^29.7.0",
-    "tsup": "^8.4.0",
-    "typescript": "^5.8.3"
+    "@types/nodemailer": "^6.4.17",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.3.0"
   }
 }

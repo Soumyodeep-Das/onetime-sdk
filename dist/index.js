@@ -1,2 +1,41 @@
-"use strict";var g=Object.create;var p=Object.defineProperty;var h=Object.getOwnPropertyDescriptor;var w=Object.getOwnPropertyNames;var E=Object.getPrototypeOf,b=Object.prototype.hasOwnProperty;var v=(t,e)=>{for(var n in e)p(t,n,{get:e[n],enumerable:!0})},C=(t,e,n,a)=>{if(e&&typeof e=="object"||typeof e=="function")for(let s of w(e))!b.call(t,s)&&s!==n&&p(t,s,{get:()=>e[s],enumerable:!(a=h(e,s))||a.enumerable});return t};var A=(t,e,n)=>(n=t!=null?g(E(t)):{},C(e||!t||!t.__esModule?p(n,"default",{value:t,enumerable:!0}):n,t)),I=t=>C(p({},"__esModule",{value:!0}),t);var N={};v(N,{initOTPClient:()=>S,sendOTP:()=>T,verifyOTP:()=>x});module.exports=I(N);var y=A(require("axios"));var u=class extends Error{constructor(e,n=400){super(e),this.name="OnetimeClientError",this.statusCode=n}},m=class extends Error{constructor(e,n=500){super(e),this.name="OnetimeServerError",this.statusCode=n}},c=class extends Error{constructor(e){super(e),this.name="OnetimeNetworkError"}};var i,P=({apiKey:t,baseURL:e="https://api.onetime.dev",timeout:n=5e3,retries:a=2})=>(i=y.default.create({baseURL:e,timeout:n,headers:{Authorization:`Bearer ${t}`,"Content-Type":"application/json"}}),i.interceptors.response.use(void 0,async s=>{var f,d,O;let o=s.config;if((!o||!o.retryCount)&&(o.retryCount=0),(s.code==="ECONNABORTED"||s.message.includes("timeout")||typeof((f=s.response)==null?void 0:f.status)=="number"&&s.response.status>=500)&&o.retryCount<a)return o.retryCount+=1,await new Promise(r=>setTimeout(r,2**o.retryCount*100)),i(o);if(s.response){let r=s.response.data;if((d=s.response)!=null&&d.status&&s.response.status>=400&&s.response.status<500)throw new u((r==null?void 0:r.message)||"Client Error",s.response.status);if((O=s.response)!=null&&O.status&&s.response.status>=500)throw new m((r==null?void 0:r.message)||"Server Error",s.response.status)}throw new c(s.message||"Network Error")}),i),l=()=>{if(!i)throw new Error("OneTime SDK not initialized. Call initOTPClient() first.");return i};var T=async t=>(await l().post("/send-otp",t)).data,x=async t=>(await l().post("/verify-otp",t)).data;var S=t=>{P(t)};0&&(module.exports={initOTPClient,sendOTP,verifyOTP});
-//# sourceMappingURL=index.js.map
+"use strict";
+// src/index.ts
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.OneTimeClient = void 0;
+const EmailService_1 = require("./core/EmailService");
+const SMSService_1 = require("./core/SMSService");
+const TokenManager_1 = require("./core/TokenManager");
+const helper_1 = require("./utils/helper");
+class OneTimeClient {
+    constructor(config) {
+        this.config = config;
+    }
+    sendOTP(identifier, via) {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a, _b;
+            const otp = (0, helper_1.generateSecureOTP)();
+            (0, TokenManager_1.storeOTP)(identifier, otp);
+            if (via === 'email' && ((_a = this.config.email) === null || _a === void 0 ? void 0 : _a.enabled)) {
+                return yield (0, EmailService_1.sendOTPViaEmail)(identifier);
+            }
+            if (via === 'sms' && ((_b = this.config.sms) === null || _b === void 0 ? void 0 : _b.enabled)) {
+                return yield (0, SMSService_1.sendOTPViaSMS)(identifier);
+            }
+            return { success: false, message: 'Invalid delivery method or not enabled in config' };
+        });
+    }
+    verifyOTP(identifier, otp) {
+        return (0, TokenManager_1.verifyOTP)(identifier, otp);
+    }
+}
+exports.OneTimeClient = OneTimeClient;
+exports.default = OneTimeClient;
