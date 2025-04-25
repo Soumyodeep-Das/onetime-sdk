@@ -16,18 +16,20 @@ exports.sendOTPViaEmail = sendOTPViaEmail;
 // src/core/EmailService.ts
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const dotenv_1 = __importDefault(require("dotenv"));
-const crypto_1 = __importDefault(require("crypto"));
+const logger_1 = require("../utils/logger");
+const errors_1 = require("../utils/errors");
+const helper_1 = require("../utils/helper");
 dotenv_1.default.config();
 const transporter = nodemailer_1.default.createTransport({
-    service: 'gmail', // You can change this based on your setup
+    service: 'gmail',
     auth: {
         user: process.env.ONETIME_EMAIL_SENDER,
-        pass: process.env.ONETIME_EMAIL_PASSWORD, // must be set in .env
+        pass: process.env.ONETIME_EMAIL_PASSWORD,
     },
 });
 function sendOTPViaEmail(to) {
     return __awaiter(this, void 0, void 0, function* () {
-        const otp = generateOTP();
+        const otp = (0, helper_1.generateSecureOTP)();
         const mailOptions = {
             from: process.env.ONETIME_EMAIL_SENDER,
             to,
@@ -36,15 +38,12 @@ function sendOTPViaEmail(to) {
         };
         try {
             yield transporter.sendMail(mailOptions);
+            logger_1.logger.info(`OTP sent to ${to} via email`);
             return { success: true, message: 'OTP sent via email successfully' };
         }
         catch (error) {
-            return { success: false, message: `Failed to send OTP: ${error.message}` };
+            logger_1.logger.error(`Failed to send OTP to ${to} via email: ${error.message}`);
+            throw new errors_1.EmailDeliveryError(`Failed to send OTP: ${error.message}`);
         }
     });
-}
-function generateOTP() {
-    const buffer = crypto_1.default.randomBytes(3); // 3 bytes = 24 bits = up to 16777215
-    const otp = buffer.readUIntBE(0, 3) % 1000000;
-    return otp.toString().padStart(6, '0');
 }

@@ -1,6 +1,6 @@
 {
   "name": "onetime-sdk",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A secure SDK for sending and verifying OTPs via email and SMS.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

@@ -14,32 +14,29 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.sendOTPViaSMS = sendOTPViaSMS;
 // src/core/SMSService.ts
-const dotenv_1 = __importDefault(require("dotenv"));
 const twilio_1 = __importDefault(require("twilio"));
-const crypto_1 = __importDefault(require("crypto"));
+const dotenv_1 = __importDefault(require("dotenv"));
+const logger_1 = require("../utils/logger");
+const errors_1 = require("../utils/errors");
+const helper_1 = require("../utils/helper");
 dotenv_1.default.config();
-const accountSid = process.env.TWILIO_ACCOUNT_SID || '';
-const authToken = process.env.TWILIO_AUTH_TOKEN || '';
-const fromNumber = process.env.TWILIO_PHONE_NUMBER || '';
-const client = (0, twilio_1.default)(accountSid, authToken);
+const client = (0, twilio_1.default)(process.env.ONETIME_TWILIO_ACCOUNT_SID, process.env.ONETIME_TWILIO_AUTH_TOKEN);
 function sendOTPViaSMS(to) {
     return __awaiter(this, void 0, void 0, function* () {
-        const otp = generateOTP();
+        const otp = (0, helper_1.generateSecureOTP)();
+        const messageBody = `Your OTP code is ${otp}. It is valid for 2 minutes.`;
         try {
             yield client.messages.create({
-                body: `Your OneTime OTP code is ${otp}. It is valid for 2 minutes.`,
-                from: fromNumber,
+                body: messageBody,
+                from: process.env.ONETIME_TWILIO_PHONE_NUMBER,
                 to,
             });
+            logger_1.logger.info(`OTP sent to ${to} via SMS`);
             return { success: true, message: 'OTP sent via SMS successfully' };
         }
         catch (error) {
-            return { success: false, message: `Failed to send OTP: ${error.message}` };
+            logger_1.logger.error(`Failed to send OTP to ${to} via SMS: ${error.message}`);
+            throw new errors_1.SMSDeliveryError(`Failed to send OTP: ${error.message}`);
         }
     });
-}
-function generateOTP() {
-    const buffer = crypto_1.default.randomBytes(3); // 3 bytes = 24 bits = up to 16777215
-    const otp = buffer.readUIntBE(0, 3) % 1000000;
-    return otp.toString().padStart(6, '0');
 }

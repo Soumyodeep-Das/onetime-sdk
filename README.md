@@ -1,76 +1,92 @@
 # OneTime SDK
 
-Easily send and verify OTPs via email or SMS using OneTime's secure API.
+Easily send and verify OTPs via email or SMS using OneTime's secure and pluggable SDK.
 
----
+## 🚀 Features
 
-## 🔧 Installation
+- 📧 Email-based OTP delivery (powered by Nodemailer)
+- 📲 SMS-based OTP delivery (powered by Twilio)
+- 🔐 Secure OTP generation with `crypto`
+- 📦 Easily embeddable in any Node.js backend
+- 🔄 Pluggable token storage (in-memory, Redis coming soon)
+- 📜 Winston-based logging and custom error classes
+- ✅ Unit-test ready (Jest setup included)
+
+## 📦 Installation
 
 ```bash
 npm install onetime-sdk
 ```
 
----
-
 ## ⚙️ Usage
 
-```ts
-import { initOTPClient, sendOTP, verifyOTP } from 'onetime-sdk';
+```typescript
+import { sendOTPViaEmail, sendOTPViaSMS, TokenManager } from 'onetime-sdk';
 
-initOTPClient({ apiKey: 'your-api-key' });
+// Email
+await sendOTPViaEmail('hello@example.com');
 
-await sendOTP({
-  channel: 'email',
-  recipient: 'hello@example.com',
-});
+// SMS
+await sendOTPViaSMS('+1234567890');
 
-await verifyOTP({
-  channel: 'email',
-  recipient: 'hello@example.com',
-  code: '123456',
-});
+// Token Management (optional usage if you're handling verification)
+TokenManager.storeToken('user@example.com', '123456');
+const isValid = TokenManager.verifyToken('user@example.com', '123456');
 ```
 
----
+## 🛠️ Environment Setup
 
-## 📘 Documentation
+Create a `.env` file in your root:
 
-- [API Docs](#) <!-- Replace # with actual documentation link if available -->
-- [Get API Key](#) <!-- Replace # with actual API key link if available -->
+```env
+# Email credentials
+ONETIME_EMAIL_SENDER=your_email@example.com
+ONETIME_EMAIL_PASSWORD=your_email_password
 
----
+# Twilio credentials
+ONETIME_TWILIO_ACCOUNT_SID=your_twilio_sid
+ONETIME_TWILIO_AUTH_TOKEN=your_twilio_auth_token
+ONETIME_TWILIO_PHONE_NUMBER=+1234567890
+```
 
-## ✅ Write Unit Tests with Jest
+Use `.env.example` as a reference.
 
-### 1. Install test tooling
+## 🧪 Unit Testing with Jest
 
+1. Install Jest tooling
 ```bash
 npm install --save-dev jest ts-jest @types/jest
 npx ts-jest config:init
 ```
 
-### 2. Example test
+2. Example test
+Create `test/client.test.ts`:
 
-Create a file at `test/client.test.ts`:
+```typescript
+import { generateSecureOTP } from '../src/utils/helpers';
 
-```ts
-import { initOTPClient } from '../src';
-import { getClient } from '../src/client';
-
-describe('SDK Client Init', () => {
-  it('should initialize Axios client with API key', () => {
-    initOTPClient({ apiKey: 'test-key' });
-    const client = getClient();
-    expect(client.defaults.headers.common['x-api-key']).toBe('test-key');
+describe('OTP Generator', () => {
+  it('should generate a 6-digit string', () => {
+    const otp = generateSecureOTP();
+    expect(otp).toMatch(/^\d{6}$/);
   });
 });
 ```
 
-### 3. Add test script to package.json
-
+3. Add test script in `package.json`:
 ```json
-"scripts": {
-  "build": "tsup",
-  "test": "jest"
+{
+  "scripts": {
+    "build": "tsc",
+    "dev": "ts-node src/index.ts",
+    "test": "jest"
+  }
 }
 ```
+
+## 📘 Documentation (Coming Soon)
+- API Docs
+- Get API Key
+
+## 📄 License
+MIT License © OneTime Team
